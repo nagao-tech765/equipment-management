@@ -1,13 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>備品管理</title>
+</head>
+
+<body>
+
+<h1>備品管理</h1>
+
+
+<!-- registerにpostする -->
 <form action="/register" method="post">
-    勉強内容:
-    <input type="text" name="content">
+
+    <!-- 備品登録フォーム -->
+    備品名
+    <input type="text" name="name" required>
 
     <br><br>
 
-    勉強時間:
-    <input type="number" name="hours">
+    数量
+    <input type="number" name="quantity" min="1" required>
 
     <br><br>
 
-    <button>登録</button>
+    <button type="submit">登録</button>
+
 </form>
+
+
+<h2>備品検索</h2>
+
+<form action="/search" method="get">
+
+    <input type="text" name="name" placeholder="備品名を入力">
+
+    <button type="submit">検索</button>
+
+</form>
+
+
+<hr>
+
+
+<table border="1">
+
+    <tr>
+        <th>ID</th>
+        <th>備品名</th>
+        <th>数量</th>
+        <th>操作</th>
+    </tr>
+
+
+    <!-- list分DBの表を作る -->
+    <tr th:each="equipment : ${list}">
+
+        <!-- IDを表示 -->
+        <td th:text="${equipment.id}"></td>
+
+
+        <!-- 備品名を表示 -->
+        <td th:text="${equipment.name}"></td>
+
+
+        <!-- 在庫を＋、ーで簡単に変更 -->
+        <td>
+
+            <form th:action="@{/quantity/decrease/{id}(id=${equipment.id})}"
+                  method="post"
+                  style="display:inline;">
+
+                <button type="submit">−</button>
+
+            </form>
+
+
+            <!-- 現在の数量を表示 -->
+            <span th:text="${equipment.quantity}"></span>
+
+
+            <form th:action="@{/quantity/increase/{id}(id=${equipment.id})}"
+                  method="post"
+                  style="display:inline;">
+
+                <button type="submit">＋</button>
+
+            </form>
+
+
+            <!-- 在庫が少ない(1以下である)ときの警告 -->
+            <span th:if="${equipment.quantity <= 1}"
+                  style="color:red;">
+
+                ⚠ 在庫が少ないです
+
+            </span>
+
+        </td>
+
+
+        <!-- 削除処理
+             equipment.id をURLの {id} に入れて、そのURLにPOST送信
+             削除前に確認
+        -->
+        <td>
+
+            <form th:action="@{/delete/{id}(id=${equipment.id})}"
+                  method="post"
+                  onsubmit="return confirm('本当に削除しますか？');">
+
+                <button type="submit">削除</button>
+
+            </form>
+
+        </td>
+
+    </tr>
+
+</table>
+
+
+</body>
+</html>
