@@ -81,7 +81,7 @@ public class HomeController {
 		}
 
 		// 更新後のデータを画面に渡す
-		model.addAttribute("list", repository.findAll());
+		model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 
 		return "index";
 	}
@@ -100,7 +100,7 @@ public class HomeController {
 	    // 数量が1未満ならエラー
 	    if (quantity < 1) {
 	        model.addAttribute("error", "数量は1以上で入力してください。");
-	        model.addAttribute("list", repository.findAll());
+	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 	        return "index";
 	    }
 
@@ -113,7 +113,7 @@ public class HomeController {
 	                "減少間隔と減少数は両方入力してください。"
 	        );
 
-	        model.addAttribute("list", repository.findAll());
+	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 
 	        return "index";
 	    }
@@ -125,7 +125,7 @@ public class HomeController {
 	                "減少間隔は1以上で入力してください。"
 	        );
 
-	        model.addAttribute("list", repository.findAll());
+	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 
 	        return "index";
 	    }
@@ -137,7 +137,7 @@ public class HomeController {
 	                "減少数は1以上で入力してください。"
 	        );
 
-	        model.addAttribute("list", repository.findAll());
+	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 
 	        return "index";
 	    }
@@ -191,7 +191,7 @@ public class HomeController {
 	 * ＋を押すとgetQuantityで現在のquantityを取得して＋１して保存
 	 * そして/に戻る事で更新
 	 */
-	@PostMapping("/quantity/increase/{id}")
+	/*@PostMapping("/quantity/increase/{id}")
 	public String increaseQuantity(@PathVariable Integer id) {
 
 		Equipment equipment = repository.findById(id)
@@ -216,6 +216,27 @@ public class HomeController {
 		}
 
 		return "redirect:/";
+	}*/
+	
+	@PostMapping("/quantity/update/{id}")
+	public String updateQuantity(
+			@PathVariable Integer id,
+			@RequestParam Integer quantity) {
+		
+		Equipment equipment = repository.findById(id)
+				.orElseThrow();
+		
+		//1未満になることを防ぐ
+		if(quantity < 1) {
+			quantity = 1;
+		}
+		
+		equipment.setQuantity(quantity);
+		
+		repository.save(equipment);
+		
+		return "redirect:/";
+		
 	}
 
 }

@@ -603,16 +603,12 @@ pre code {
 
             <div class="quantity-area">
 
-                <form th:action="@{/quantity/decrease/{id}(id=${equipment.id})}"
-                      method="post"
-                      style="display:inline;">
-
-                    <button type="submit"
-                            class="quantity-button">
+                    <button type="button"
+                            class="quantity-button"
+							onclick="changeQuantity(this, -1)">
                         −
                     </button>
 
-                </form>
 
 
                 <!-- 現在の数量を表示 -->
@@ -620,19 +616,13 @@ pre code {
                       th:text="${equipment.quantity}">
                 </span>
 
-
-                <form th:action="@{/quantity/increase/{id}(id=${equipment.id})}"
-                      method="post"
-                      style="display:inline;">
-
-                    <button type="submit"
-                            class="quantity-button">
+                    <button type="button"
+                            class="quantity-button"
+							onclick="changeQuantity(this, 1)">
                         ＋
                     </button>
 
-                </form>
-
-
+                
                 <!-- 在庫が少ない(1以下である)ときの警告 -->
                 <span th:if="${equipment.quantity <= 1}"
                       class="stock-warning">
@@ -642,8 +632,14 @@ pre code {
                 </span>
 
             </div>
-
-        </td>
+			
+			<button type="button"
+					class="notion-button"
+					onclick="saveQuantity(this)">
+				決定
+			</button>	
+        
+		</td>
 
 
         <!-- 削除処理
@@ -670,6 +666,74 @@ pre code {
 </table>
 
 </div>
+
+	<script>
+		
+	
+	//＋、－でquantityを変えるための処理
+	function changeQuantity(button, amount){
+		
+		//ボタンが入っているquantity-areaを取得
+		const quantityArea = button.closest(".quantity-area");
+		
+		//数量の表示部分を取得
+		const quantityNumber = quantityArea.querySelector(".quantity-number");
+		
+		//現在表示されている数量を取得
+		let quantity = Number(quantityNumber.textContent);
+		
+		//数量変更
+		quantity += amount;
+		
+		//1未満にはしない
+		if(quantity < 1) {
+			
+			quantity = 1;
+			
+		}
+		
+		quantityNumber.textContent = quantity;
+		
+	}
+	
+	function saveQuantity(button){
+		
+		//決定ボタンのある行を取得
+		const row = button.closest("tr");
+		
+		//数量表示を取得
+		const number = row.querySelector(".quantity-number");
+		
+		//IDを取得
+		const id = row.querySelector("td:first-child").textContent;
+		
+		//現在の数量を取得
+		const quantity = Number(number.textContent);
+		
+		//POSTでサーバーに送信
+		fetch("/quantity/update/" + id, {
+			
+			method : "POST",
+			
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded"
+			},
+			
+			body: "quantity=" + quantity
+			
+			
+		})
+		.then(() =>{
+			
+			//保存が終わったらリロード
+			location.reload();
+			
+		});
+		
+	}
+	
+	
+	</script>
 
 </body>
 
