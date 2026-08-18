@@ -132,7 +132,8 @@ public class HomeController {
 
 	    // 減少数が1未満ならエラー
 	    if (decreaseQuantity != null && decreaseQuantity < 1) {
-	        model.addAttribute(
+	        
+	    	model.addAttribute(
 	                "error",
 	                "減少数は1以上で入力してください。"
 	        );
@@ -140,6 +141,20 @@ public class HomeController {
 	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
 
 	        return "index";
+	    }
+	    
+	    //同じ名前の備品名を登録するとエラー
+	    if (repository.existsByName(name)) {
+	    	
+	    	model.addAttribute(
+	    			"errorMessage",
+	    			"「" + name + "」はもう登録されています"
+	    	);
+	    	
+	        model.addAttribute("list", repository.findAllByOrderByQuantityAsc());
+	    	
+	    	return "index";
+	    	
 	    }
 
 	    Equipment equipment = new Equipment();
