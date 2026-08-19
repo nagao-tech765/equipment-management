@@ -25,7 +25,7 @@ class DemoApplicationTests {
 		Equipment equipment = new Equipment();
 
 		equipment.setQuantity(10);
-		equipment.setDecreaseMonths(1);
+		equipment.setDecreaseInterval(1);
 		equipment.setDecreaseQuantity(2);
 		equipment.setLastDecreasedAt(
 				LocalDate.of(2026, 8, 16));
@@ -60,7 +60,7 @@ class DemoApplicationTests {
 		Equipment equipment = new Equipment();
 
 		equipment.setQuantity(10);
-		equipment.setDecreaseMonths(1);
+		equipment.setDecreaseInterval(1);
 		equipment.setDecreaseQuantity(2);
 		equipment.setLastDecreasedAt(
 				LocalDate.of(2026, 8, 16));
@@ -98,7 +98,7 @@ class DemoApplicationTests {
 		Equipment equipment = new Equipment();
 
 		equipment.setQuantity(10);
-		equipment.setDecreaseMonths(1);
+		equipment.setDecreaseInterval(1);
 		equipment.setDecreaseQuantity(2);
 		equipment.setLastDecreasedAt(
 				LocalDate.of(2026, 8, 16));
@@ -133,7 +133,7 @@ class DemoApplicationTests {
 		Equipment equipment = new Equipment();
 
 		equipment.setQuantity(1);
-		equipment.setDecreaseMonths(1);
+		equipment.setDecreaseInterval(1);
 		equipment.setDecreaseQuantity(2);
 		equipment.setLastDecreasedAt(
 				LocalDate.of(2026, 8, 16));
@@ -154,7 +154,7 @@ class DemoApplicationTests {
 
 
 	/*
-	 * ⑤ decreaseMonthsが設定されていなければ何もしない
+	 * ⑤ DecreaseIntervalが設定されていなければ何もしない
 	 */
 	@Test
 	void 減少月数が未設定なら何もしない() {
@@ -166,7 +166,7 @@ class DemoApplicationTests {
 		equipment.setQuantity(10);
 
 		// 減少月数を設定しない
-		equipment.setDecreaseMonths(null);
+		equipment.setDecreaseInterval(null);
 
 		equipment.setDecreaseQuantity(2);
 		equipment.setLastDecreasedAt(
@@ -206,7 +206,7 @@ class DemoApplicationTests {
 		Equipment equipment = new Equipment();
 
 		equipment.setQuantity(10);
-		equipment.setDecreaseMonths(2);
+		equipment.setDecreaseInterval(2);
 		equipment.setDecreaseQuantity(3);
 		equipment.setLastDecreasedAt(
 				LocalDate.of(2026, 8, 16));

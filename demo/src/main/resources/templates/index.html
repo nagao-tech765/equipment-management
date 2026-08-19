@@ -413,6 +413,7 @@ pre code {
   background: #fff;
   color: #d44c47;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .--button-danger:hover {
@@ -487,6 +488,17 @@ pre code {
   }
 }
 
+@media (max-width: 700px) {
+    .decrease-setting-area {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .decrease-form {
+        flex-wrap: wrap;
+    }
+}
+
 /* エラーメッセージ */
 .error-message {
   margin: 16px 0;
@@ -497,6 +509,31 @@ pre code {
   color: #d44c47;
   font-size: 14px;
 }
+
+/*減少設定フォーム*/
+.decrease-setting-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.decrease-input-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.decrease-button-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.decrease-unit-text {
+    white-space: nowrap;
+}
+
 </style>
 
 </head>
@@ -536,7 +573,7 @@ pre code {
                required>
     </div>
 
-    <div class="form-row">
+        <!--<div class="form-row">
         <span class="form-label">減少間隔</span>
         <input type="number"
                name="decreaseMonths"
@@ -552,7 +589,7 @@ pre code {
                class="--input"
                min="1"
                placeholder="何個減らす？">
-    </div>
+    </div>-->
 
     <button type="submit" class="--button primary">
         登録
@@ -583,19 +620,17 @@ pre code {
 <table class="--table">
 
     <tr>
-        <th>ID</th>
-        <th>備品名</th>
+        
+		<th>備品名</th>
         <th>数量</th>
-        <th>操作</th>
+		<th>操作</th>
+		<th>自動減少設定</th>
+		
     </tr>
 
 
-    <!-- list分DBの表を作る -->
-    <tr th:each="equipment : ${list}">
-
-        <!-- IDを表示 -->
-        <td th:text="${equipment.id}"></td>
-
+    <!-- list分DBの表を作る、data-id属性としてidを受け取る -->
+	<tr th:each="equipment : ${list}" th:attr="data-id=${equipment.id}">
 
         <!-- 備品名を表示 -->
         <td th:text="${equipment.name}"></td>
@@ -663,7 +698,71 @@ pre code {
             </form>
 
         </td>
+		
+		<td>
+			
+			<!-- 減少設定フォーム -->
+			<div class="decrease-setting-area">
 
+			    <div class="decrease-status">
+			        <span th:if="${equipment.decreaseInterval != null}">
+			            <span th:text="${equipment.decreaseInterval}"></span>
+			            <span th:if="${equipment.decreaseUnit =='DAY'}">日</span>
+			            <span th:if="${equipment.decreaseUnit =='MONTH'}">ヶ月</span>
+			            ごとに
+			            <span th:text="${equipment.decreaseQuantity}"></span>
+			            個減少
+			        </span>
+			        <span th:if="${equipment.decreaseInterval == null}">
+			            自動減少：未設定
+			        </span>
+			    </div>
+
+			    <form th:action="@{/decrease-setting/{id}(id=${equipment.id})}"
+			          method="post">
+			        <div class="decrease-input-form">
+			            <input type="number"
+			                   name="decreaseInterval"
+			                   min="1"
+			                   placeholder="減少間隔"
+			                   required>
+			            <select name="decreaseUnit">
+			                <option value="DAY">日ごとに</option>
+			                <option value="MONTH">ヶ月ごとに</option>
+			            </select>
+			            <input type="number"
+			                   name="decreaseQuantity"
+			                   min="1"
+			                   placeholder="減少数"
+			                   required>
+						
+						<span class="decrease-unit-text">個減少</span>	   
+						
+			        </div>
+
+			        <div class="decrease-button-area">
+			            <button type="submit" class="--button">
+			                設定
+			            </button>
+
+			            <button type="button"
+			                    class="--button-danger"
+			                    th:onclick="'if(confirm(\'自動減少設定を解除しますか？\')) document.getElementById(\'delete-form-' + ${equipment.id} + '\').submit();'">
+			                自動減少解除
+			            </button>
+			        </div>
+			    </form>
+
+			    <!-- 減少設定解除フォーム -->
+			    <form th:id="'delete-form-' + ${equipment.id}"
+			          th:action="@{/decrease-setting/delete/{id}(id=${equipment.id})}"
+			          method="post">
+			    </form>
+
+			</div>
+							
+		</td>
+		
     </tr>
 
 </table>
@@ -708,7 +807,7 @@ pre code {
 		const number = row.querySelector(".quantity-number");
 		
 		//IDを取得
-		const id = row.querySelector("td:first-child").textContent;
+		const id = row.dataset.id;
 		
 		//現在の数量を取得
 		const quantity = Number(number.textContent);

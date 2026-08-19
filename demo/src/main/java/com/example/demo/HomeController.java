@@ -41,25 +41,40 @@ public class HomeController {
 		for (Equipment equipment : equipmentList) {
 
 			// 自動減少の設定がない場合は何もしない
-			if (equipment.getDecreaseMonths() == null
+			if (equipment.getDecreaseInterval() == null
 					|| equipment.getDecreaseQuantity() == null
+					|| equipment.getDecreaseUnit() == null
 					|| equipment.getLastDecreasedAt() == null) {
 
 				continue;
 			}
 
-			// 最後に減らしてから何ヶ月経ったか計算
-			long monthsPassed = ChronoUnit.MONTHS.between(
-					equipment.getLastDecreasedAt(),
-					today);
+			// 最後に減らしてからどのくらい経ったかを計算(日数、月数)
+			long passed;
+			
+			if("DAY".equals(equipment.getDecreaseUnit())) {
+				//日単位
+				passed = ChronoUnit.DAYS.between(
+						equipment.getLastDecreasedAt(),
+						today
+				);
+				
+			} else {
+				//月単位
+				passed = ChronoUnit.MONTHS.between(
+						equipment.getLastDecreasedAt(),
+						today
+				);
+				
+			}
 
 			// 設定した期間に達していなければ何もしない
-			if (monthsPassed < equipment.getDecreaseMonths()) {
+			if (passed < equipment.getDecreaseInterval()) {
 				continue;
 			}
 
 			// 何回分の減少が発生したか計算
-			long decreaseCount = monthsPassed / equipment.getDecreaseMonths();
+			long decreaseCount = passed / equipment.getDecreaseInterval();
 
 			// 合計で何個減らすか計算
 			int totalDecrease = (int) (decreaseCount * equipment.getDecreaseQuantity());
@@ -70,12 +85,27 @@ public class HomeController {
 			// 新しい数量を設定
 			equipment.setQuantity(newQuantity);
 
-			// 最後に減らした日を更新
-			equipment.setLastDecreasedAt(
-					equipment.getLastDecreasedAt()
-							.plusMonths(
-									decreaseCount * equipment.getDecreaseMonths()));
-
+			// 最後に減らした日、月を更新
+			if("DAY".equals(equipment.getDecreaseUnit())) {
+				
+				equipment.setLastDecreasedAt(
+						equipment.getLastDecreasedAt()
+								.plusDays(
+										decreaseCount * equipment.getDecreaseInterval()
+								)
+				);
+				
+			} else {
+			
+				equipment.setLastDecreasedAt(
+						equipment.getLastDecreasedAt()
+								.plusMonths(
+										decreaseCount * equipment.getDecreaseInterval()
+								)
+				);
+			
+			}
+			
 			// DBに保存
 			repository.save(equipment);
 		}
@@ -93,9 +123,13 @@ public class HomeController {
 	public String register(
 	        @RequestParam String name,
 	        @RequestParam Integer quantity,
-	        @RequestParam(required = false) Integer decreaseMonths,
+	        @RequestParam(required = false) Integer decreaseInterval,
 	        @RequestParam(required = false) Integer decreaseQuantity,
 	        Model model) {
+		
+		//備品名に空白があった場合削除
+		name = name.trim();
+		
 
 	    // 数量が1未満ならエラー
 	    if (quantity < 1) {
@@ -105,8 +139,8 @@ public class HomeController {
 	    }
 
 	    // 減少間隔と減少数が片方だけ入力されている場合
-	    if ((decreaseMonths == null && decreaseQuantity != null)
-	            || (decreaseMonths != null && decreaseQuantity == null)) {
+	    if ((decreaseInterval == null && decreaseQuantity != null)
+	            || (decreaseInterval != null && decreaseQuantity == null)) {
 
 	        model.addAttribute(
 	                "error",
@@ -119,7 +153,7 @@ public class HomeController {
 	    }
 
 	    // 減少間隔が1未満ならエラー
-	    if (decreaseMonths != null && decreaseMonths < 1) {
+	    if (decreaseInterval != null && decreaseInterval < 1) {
 	        model.addAttribute(
 	                "error",
 	                "減少間隔は1以上で入力してください。"
@@ -163,11 +197,11 @@ public class HomeController {
 	    equipment.setQuantity(quantity);
 
 	    // 自動減少の設定
-	    equipment.setDecreaseMonths(decreaseMonths);
+	    equipment.setDecreaseInterval(decreaseInterval);
 	    equipment.setDecreaseQuantity(decreaseQuantity);
 
 	    // 自動減少を設定した場合だけ基準日を設定
-	    if (decreaseMonths != null && decreaseQuantity != null) {
+	    if (decreaseInterval != null && decreaseQuantity != null) {
 
 	        // 登録した日を基準日にする
 	        equipment.setLastDecreasedAt(LocalDate.now());
@@ -202,36 +236,6 @@ public class HomeController {
 		return "index";
 	}
 
-	/*
-	 * ＋を押すとgetQuantityで現在のquantityを取得して＋１して保存
-	 * そして/に戻る事で更新
-	 */
-	/*@PostMapping("/quantity/increase/{id}")
-	public String increaseQuantity(@PathVariable Integer id) {
-
-		Equipment equipment = repository.findById(id)
-				.orElseThrow();
-
-		equipment.setQuantity(equipment.getQuantity() + 1);
-
-		repository.save(equipment);
-
-		return "redirect:/";
-	}
-
-	@PostMapping("/quantity/decrease/{id}")
-	public String decreaseQuantity(@PathVariable Integer id) {
-
-		Equipment equipment = repository.findById(id)
-				.orElseThrow();
-
-		if (equipment.getQuantity() > 1) {
-			equipment.setQuantity(equipment.getQuantity() - 1);
-			repository.save(equipment);
-		}
-
-		return "redirect:/";
-	}*/
 	
 	@PostMapping("/quantity/update/{id}")
 	public String updateQuantity(
@@ -252,6 +256,54 @@ public class HomeController {
 		
 		return "redirect:/";
 		
+	}
+	
+	//減少設定の保存
+	@PostMapping("/decrease-setting/{id}")
+	public String setDecreaseSetting(
+			@PathVariable Integer id,
+			@RequestParam Integer decreaseInterval,
+			@RequestParam String decreaseUnit,
+			@RequestParam Integer decreaseQuantity) {
+		
+		//idから備品取得
+		Equipment equipment = repository.findById(id)
+				.orElseThrow();
+		
+		//減少間隔設定
+		equipment.setDecreaseInterval(decreaseInterval);
+		
+		//日、月の設定
+		equipment.setDecreaseUnit(decreaseUnit);
+		
+		//減少数設定
+		equipment.setDecreaseQuantity(decreaseQuantity);
+		
+		//基準日の設定
+		equipment.setLastDecreasedAt(LocalDate.now());
+		
+		//DBに保存
+		repository.save(equipment);
+		
+		return "redirect:/";
+		
+	}
+	
+	//減少設定の解除
+	@PostMapping("/decrease-setting/delete/{id}")
+	public String deleteDecreaseSetting(@PathVariable Integer id) {
+
+	    Equipment equipment = repository.findById(id)
+	            .orElseThrow();
+
+	    equipment.setDecreaseInterval(null);
+	    equipment.setDecreaseUnit(null);
+	    equipment.setDecreaseQuantity(null);
+	    equipment.setLastDecreasedAt(null);
+
+	    repository.save(equipment);
+
+	    return "redirect:/";
 	}
 
 }
