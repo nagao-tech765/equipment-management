@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /*
  * Controller
@@ -236,11 +237,12 @@ public class HomeController {
 		return "index";
 	}
 
-	
+	//数量変更したときの処理
 	@PostMapping("/quantity/update/{id}")
 	public String updateQuantity(
 			@PathVariable Integer id,
-			@RequestParam Integer quantity) {
+			@RequestParam Integer quantity,
+			RedirectAttributes redirectAttributes) {
 		
 		Equipment equipment = repository.findById(id)
 				.orElseThrow();
@@ -252,7 +254,14 @@ public class HomeController {
 		
 		equipment.setQuantity(quantity);
 		
-		repository.save(equipment);
+		//数量変更の通知
+		redirectAttributes.addFlashAttribute(
+				"message",
+				"「" + equipment.getName() + "」の数量を"
+				+ quantity + "個に変更しました"
+		);
+		
+		repository.save(equipment);		
 		
 		return "redirect:/";
 		
@@ -264,7 +273,8 @@ public class HomeController {
 			@PathVariable Integer id,
 			@RequestParam Integer decreaseInterval,
 			@RequestParam String decreaseUnit,
-			@RequestParam Integer decreaseQuantity) {
+			@RequestParam Integer decreaseQuantity,
+			RedirectAttributes redirectAttributes) {
 		
 		//idから備品取得
 		Equipment equipment = repository.findById(id)
@@ -284,6 +294,25 @@ public class HomeController {
 		
 		//DBに保存
 		repository.save(equipment);
+		
+		String unit;
+		
+		if("DAY".equals(decreaseUnit)) {
+			unit = "日";
+		} else {
+			unit = "ヶ月";
+		}
+		
+		redirectAttributes.addFlashAttribute(
+				"message",
+				"「" + equipment.getName()
+				+ "」の自動減少を"
+				+ decreaseInterval
+				+ unit
+				+ "ごとに"
+				+ decreaseQuantity
+				+"個減らすように設定しました"
+		);
 		
 		return "redirect:/";
 		

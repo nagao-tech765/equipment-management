@@ -499,6 +499,17 @@ pre code {
     }
 }
 
+/* 操作結果メッセージ */
+.success-message{
+	margin: 16px 0;
+	padding: 12px 16px;
+	border: 1px solid #b7dfc2;
+	border-radius: 6px;
+	background: #e8f7ed;
+	color: #287a3e;
+	font-size: 14px;	
+}
+
 /* エラーメッセージ */
 .error-message {
   margin: 16px 0;
@@ -543,6 +554,11 @@ pre code {
 <div class="--page">
 
 <h1 class="--title">備品管理</h1>
+
+<!-- 操作結果の通知 -->
+<div th:if="${message}" class="success-message">
+	<span th:text="${message}"></span>
+</div>
 
 
 <div th:if ="${errorMessage}"
@@ -637,46 +653,48 @@ pre code {
 
 
         <!-- 在庫を＋、ーで簡単に変更 -->
-        <td>
+		<td>
 
-            <div class="quantity-area">
+		    <form th:action="@{/quantity/update/{id}(id=${equipment.id})}"
+		          method="post">
 
-                    <button type="button"
-                            class="quantity-button"
-							onclick="changeQuantity(this, -1)">
-                        −
-                    </button>
+		        <div class="quantity-area">
 
+		            <button type="button"
+		                    class="quantity-button"
+		                    onclick="changeQuantity(this, -1)">
+		                −
+		            </button>
 
+		            <span class="quantity-number"
+		                  th:text="${equipment.quantity}">
+		            </span>
 
-                <!-- 現在の数量を表示 -->
-                <span class="quantity-number"
-                      th:text="${equipment.quantity}">
-                </span>
+		            <button type="button"
+		                    class="quantity-button"
+		                    onclick="changeQuantity(this, 1)">
+		                ＋
+		            </button>
 
-                    <button type="button"
-                            class="quantity-button"
-							onclick="changeQuantity(this, 1)">
-                        ＋
-                    </button>
+		            <span th:if="${equipment.quantity <= 1}"
+		                  class="stock-warning">
+		                ⚠ 在庫が少ないです
+		            </span>
 
-                
-                <!-- 在庫が少ない(1以下である)ときの警告 -->
-                <span th:if="${equipment.quantity <= 1}"
-                      class="stock-warning">
+		        </div>
 
-                    ⚠ 在庫が少ないです
+		        <!-- Controllerに送る数量 -->
+		        <input type="hidden"
+		               name="quantity"
+		               class="quantity-input"
+		               th:value="${equipment.quantity}">
 
-                </span>
+		        <button type="submit" class="--button">
+		            決定
+		        </button>
 
-            </div>
-			
-			<button type="button"
-					class="--quantityButton"
-					onclick="saveQuantity(this)">
-				決定
-			</button>	
-        
+		    </form>
+
 		</td>
 
 
@@ -798,40 +816,33 @@ pre code {
 		
 	}
 	
-	function saveQuantity(button){
-		
-		//決定ボタンのある行を取得
-		const row = button.closest("tr");
-		
-		//数量表示を取得
-		const number = row.querySelector(".quantity-number");
-		
-		//IDを取得
-		const id = row.dataset.id;
-		
-		//現在の数量を取得
-		const quantity = Number(number.textContent);
-		
-		//POSTでサーバーに送信
-		fetch("/quantity/update/" + id, {
-			
-			method : "POST",
-			
-			headers: {
-				"Content-Type": "application/x-www-form-urlencoded"
-			},
-			
-			body: "quantity=" + quantity
-			
-			
-		})
-		.then(() =>{
-			
-			//保存が終わったらリロード
-			location.reload();
-			
-		});
-		
+	//数量変更するためのメソッド
+	function changeQuantity(button, amount) {
+
+		//ボタンが入っているquantity-areaを取得	    
+		const quantityArea = button.closest(".quantity-area");
+
+		//数量の表示部分を取得
+		const quantityNumber =
+	        quantityArea.querySelector(".quantity-number");
+
+		// フォームから送信する数量を取得
+		const quantityInput =
+	        button.closest("form").querySelector(".quantity-input");
+
+		//現在表示されている数量を取得
+	    let quantity = Number(quantityNumber.textContent);
+
+		//数量変更
+	    quantity += amount;
+
+		//1未満にはしない
+	    if (quantity < 1) {
+	        quantity = 1;
+	    }
+
+	    quantityNumber.textContent = quantity;
+	    quantityInput.value = quantity;
 	}
 	
 	
