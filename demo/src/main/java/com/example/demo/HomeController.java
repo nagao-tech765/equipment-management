@@ -123,6 +123,7 @@ public class HomeController {
 	@PostMapping("/register")
 	public String register(
 	        @RequestParam String name,
+	        @RequestParam(required = false) String category,
 	        @RequestParam Integer quantity,
 	        @RequestParam(required = false) Integer decreaseInterval,
 	        @RequestParam(required = false) Integer decreaseQuantity,
@@ -195,6 +196,7 @@ public class HomeController {
 	    Equipment equipment = new Equipment();
 
 	    equipment.setName(name);
+	    equipment.setCategory(category);
 	    equipment.setQuantity(quantity);
 
 	    // 自動減少の設定
@@ -224,7 +226,112 @@ public class HomeController {
 
 		return "redirect:/";
 	}
+	
+	/*
+	 * 設定ボタンから
+	 * ジャンル、保管場所、自動減少、在庫警告数をまとめて保存する
+	 */
+	@PostMapping("/settings/{id}")
+	public String saveSettings(
+	        @PathVariable Integer id,
 
+	        @RequestParam(required = false) String category,
+
+	        @RequestParam(required = false) String storageLocation,
+
+	        @RequestParam(required = false) Integer decreaseInterval,
+
+	        @RequestParam(required = false) String decreaseUnit,
+
+	        @RequestParam(required = false) Integer decreaseQuantity,
+
+	        @RequestParam(required = false) Integer warningQuantity) {
+
+	    // IDから備品を取得
+	    Equipment equipment = repository.findById(id)
+	            .orElseThrow();
+
+	    //ジャンル
+	    if (category == null || category.isBlank()) {
+	        equipment.setCategory(null);
+	    } else {
+	        equipment.setCategory(category);
+	    }
+
+	    //保管場所
+	    if (storageLocation == null || storageLocation.isBlank()) {
+	        equipment.setStorageLocation(null);
+	    } else {
+	        equipment.setStorageLocation(storageLocation);
+	    }
+
+	    //在庫数警告
+	    if (warningQuantity == null || warningQuantity < 1) {
+	        equipment.setWarningQuantity(null);
+	    } else {
+	        equipment.setWarningQuantity(warningQuantity);
+	    }
+
+	    /*
+	     * 自動減少
+	     * 3つ全部揃っている場合だけ設定する
+	     */
+	    if (decreaseInterval != null
+	            && decreaseInterval >= 1
+	            && decreaseUnit != null
+	            && !decreaseUnit.isBlank()
+	            && decreaseQuantity != null
+	            && decreaseQuantity >= 1) {
+
+	        equipment.setDecreaseInterval(decreaseInterval);
+	        equipment.setDecreaseUnit(decreaseUnit);
+	        equipment.setDecreaseQuantity(decreaseQuantity);
+
+	        // 自動減少を設定した日を基準日にする
+	        equipment.setLastDecreasedAt(LocalDate.now());
+
+	    } else {
+
+	        // 自動減少を未設定にする
+	        equipment.setDecreaseInterval(null);
+	        equipment.setDecreaseUnit(null);
+	        equipment.setDecreaseQuantity(null);
+	        equipment.setLastDecreasedAt(null);
+	    }
+
+	    // DBに保存
+	    repository.save(equipment);
+
+	    return "redirect:/";
+	}
+	
+	/*
+	 * 設定画面からジャンルと保管場所を保存
+	 */
+	@PostMapping("/settings/update/{id}")
+	public String updateSettings(
+			@PathVariable Integer id,
+			@RequestParam String category,
+			@RequestParam String storageLocation) {
+		
+		//IDから備品を取得
+		Equipment equipment = repository.findById(id)
+				.orElseThrow();
+		
+		//ジャンルを更新
+		equipment.setCategory(category);
+		
+		//保管場所を更新
+		equipment.setStorageLocation(storageLocation);
+		
+		//DBに保存
+		repository.save(equipment);
+		
+		//トップページに戻る
+		return "redirect:/";
+		
+	}
+	
 	@GetMapping("/search")
 	public String search(
 			@RequestParam String name,

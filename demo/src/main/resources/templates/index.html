@@ -545,6 +545,58 @@ pre code {
     white-space: nowrap;
 }
 
+.settings-panel {
+    display: none;
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #f7f6f3;
+}
+
+.settings-panel.open {
+    display: block;
+}
+
+/* 設定欄CSS */
+
+.settings-panel{
+	margin-top: 20px;
+	padding: 20px;
+	border-top: 1px solid var(--border);
+	
+}
+
+/*設定欄の見出し*/
+.settings-panel h3{
+	margin: 0 0 16px;
+	font-size: 18px;
+}
+
+/*設定項目*/
+.setting-row{
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 12px;
+}
+
+/*ラベル*/
+.setting-row label{
+	width: 80px;
+	color: var(--muted)
+}
+
+/* 保存ボタン */
+.settings-save-button{
+	margin-top: 12px;
+}
+
+/* 削除ボタン */
+.settings-delete-button{
+	margin-top: 24px;
+}
+
 </style>
 
 </head>
@@ -606,6 +658,33 @@ pre code {
                min="1"
                placeholder="何個減らす？">
     </div>-->
+	
+	<!-- ジャンル -->
+	<div class="form-row">
+	    <span class="form-label">ジャンル</span>
+
+	    <select name="category" class="--input">
+	        <option value="">未設定</option>
+	        <option value="食品">食品</option>
+	        <option value="日用品">日用品</option>
+	        <option value="文房具">文房具</option>
+	        <option value="衛生用品">衛生用品</option>
+	        <option value="掃除用品">掃除用品</option>
+	        <option value="その他">その他</option>
+	    </select>
+	</div>
+
+	<!-- 保管場所 -->
+	<div class="form-row">
+	    <span class="form-label">保管場所</span>
+
+	    <input type="text"
+	           name="storageLocation"
+	           class="--input"
+	           placeholder="例：台所"
+	           >
+	</div>
+
 
     <button type="submit" class="--button primary">
         登録
@@ -638,9 +717,11 @@ pre code {
     <tr>
         
 		<th>備品名</th>
-        <th>数量</th>
-		<th>操作</th>
-		<th>自動減少設定</th>
+		<th>ジャンル</th>
+		<th>保管場所</th>
+		<th>数量</th>
+		<th>自動減少</th>
+		<th>設定</th>
 		
     </tr>
 
@@ -650,8 +731,29 @@ pre code {
 
         <!-- 備品名を表示 -->
         <td th:text="${equipment.name}"></td>
+		
+		<!-- ジャンル -->
+		<td>
+		    <span th:if="${equipment.category != null}"
+		          th:text="${equipment.category}">
+		    </span>
 
+		    <span th:if="${equipment.category == null}">
+		        未設定
+		    </span>
+		</td>
+		
+		<!-- 保管場所 -->
+		<td>
+		    <span th:if="${equipment.storageLocation != null}"
+		          th:text="${equipment.storageLocation}">
+		    </span>
 
+		    <span th:if="${equipment.storageLocation == null}">
+		        未設定
+		    </span>
+		</td>
+		
         <!-- 在庫を＋、ーで簡単に変更 -->
 		<td>
 
@@ -676,10 +778,12 @@ pre code {
 		                ＋
 		            </button>
 
-		            <span th:if="${equipment.quantity <= 1}"
-		                  class="stock-warning">
-		                ⚠ 在庫が少ないです
-		            </span>
+					<span th:if="${equipment.warningStock}"
+					      class="stock-warning">
+
+					    ⚠ 在庫が少ないです
+
+					</span>
 
 		        </div>
 
@@ -696,26 +800,6 @@ pre code {
 		    </form>
 
 		</td>
-
-
-        <!-- 削除処理
-             equipment.id をURLの {id} に入れて、そのURLにPOST送信
-             削除前に確認
-        -->
-        <td>
-
-            <form th:action="@{/delete/{id}(id=${equipment.id})}"
-                  method="post"
-                  onsubmit="return confirm('本当に削除しますか？');">
-
-                <button type="submit"
-                        class="--button-danger">
-                    削除
-                </button>
-
-            </form>
-
-        </td>
 		
 		<td>
 			
@@ -736,7 +820,7 @@ pre code {
 			        </span>
 			    </div>
 
-			    <form th:action="@{/decrease-setting/{id}(id=${equipment.id})}"
+			    <!--form th:action="@{/decrease-setting/{id}(id=${equipment.id})}"
 			          method="post">
 			        <div class="decrease-input-form">
 			            <input type="number"
@@ -769,7 +853,7 @@ pre code {
 			                自動減少解除
 			            </button>
 			        </div>
-			    </form>
+			    </form -->
 
 			    <!-- 減少設定解除フォーム -->
 			    <form th:id="'delete-form-' + ${equipment.id}"
@@ -781,40 +865,208 @@ pre code {
 							
 		</td>
 		
-    </tr>
+		<!-- 削除処理
+		     equipment.id をURLの {id} に入れて、そのURLにPOST送信
+		     削除前に確認
+		-->
+		<td>
+			
+			<!-- ⚙設定ボタン -->
+			<button type="button"
+			        class="--button"
+			        onclick="toggleSettings(this)">
+			    ⚙
+			</button>
 
+			<!-- 設定欄 -->
+			<div class="settings-panel">
+
+			    <!-- 設定保存　-->
+			    <form th:action="@{/settings/{id}(id=${equipment.id})}"
+			          method="post">
+
+			        <h3>備品設定</h3>
+
+
+			        <!-- ジャンル -->
+			        <div class="setting-row">
+
+			            <label>ジャンル</label>
+
+			            <select name="category" class="--input">
+
+			                <option value=""
+			                        th:selected="${equipment.category == null || equipment.category == ''}">
+			                    未設定
+			                </option>
+
+			                <option value="食品"
+			                        th:selected="${equipment.category == '食品'}">
+			                    食品
+			                </option>
+
+			                <option value="日用品"
+			                        th:selected="${equipment.category == '日用品'}">
+			                    日用品
+			                </option>
+
+			                <option value="文房具"
+			                        th:selected="${equipment.category == '文房具'}">
+			                    文房具
+			                </option>
+
+			                <option value="衛生用品"
+			                        th:selected="${equipment.category == '衛生用品'}">
+			                    衛生用品
+			                </option>
+
+			                <option value="掃除用品"
+			                        th:selected="${equipment.category == '掃除用品'}">
+			                    掃除用品
+			                </option>
+
+			                <option value="その他"
+			                        th:selected="${equipment.category == 'その他'}">
+			                    その他
+			                </option>
+
+			            </select>
+
+			        </div>
+
+
+			        <!-- 保管場所 -->
+			        <div class="setting-row">
+
+			            <label>保管場所</label>
+
+			            <input type="text"
+			                   name="storageLocation"
+			                   class="--input"
+			                   placeholder="例:台所"
+			                   th:value="${equipment.storageLocation}">
+
+			        </div>
+
+
+			        <!-- 自動減少 -->
+			        <div class="setting-row">
+
+			            <label>減少間隔</label>
+
+			            <input type="number"
+			                   name="decreaseInterval"
+			                   min="1"
+			                   placeholder="間隔"
+			                   th:value="${equipment.decreaseInterval}">
+
+			        </div>
+
+
+			        <!-- 減少単位 -->
+			        <div class="setting-row">
+
+			            <label>減少単位</label>
+
+			            <select name="decreaseUnit" class="--input">
+
+			                <option value=""
+			                        th:selected="${equipment.decreaseUnit == null || equipment.decreaseUnit == ''}">
+			                    未設定
+			                </option>
+
+			                <option value="DAY"
+			                        th:selected="${equipment.decreaseUnit == 'DAY'}">
+			                    日
+			                </option>
+
+			                <option value="MONTH"
+			                        th:selected="${equipment.decreaseUnit == 'MONTH'}">
+			                    月
+			                </option>
+
+			            </select>
+
+			        </div>
+
+
+			        <!-- 減少数 -->
+			        <div class="setting-row">
+
+			            <label>減少数</label>
+
+			            <input type="number"
+			                   name="decreaseQuantity"
+			                   min="1"
+			                   placeholder="減少数"
+			                   th:value="${equipment.decreaseQuantity}">
+
+			            <span>個</span>
+
+			        </div>
+
+
+			        <!-- 在庫警告数 -->
+			        <div class="setting-row">
+
+			            <label>在庫警告数</label>
+
+			            <input type="number"
+			                   name="warningQuantity"
+			                   min="1"
+			                   placeholder="未設定"
+			                   th:value="${equipment.warningQuantity}">
+
+			            <span>個以下で警告</span>
+
+			        </div>
+
+
+			        <!-- 保存 -->
+			        <button type="submit"
+			                class="--button primary">
+			            保存
+			        </button>
+
+			    </form>
+
+
+			    <!-- 自動減少解除 -->
+			    <form th:action="@{/decrease-setting/delete/{id}(id=${equipment.id})}"
+			          method="post"
+			          onsubmit="return confirm('自動減少設定を解除しますか？');">
+
+			        <button type="submit"
+			                class="--button-danger">
+			            自動減少解除
+			        </button>
+
+			    </form>
+
+
+			    <!-- 削除 -->
+			    <form th:action="@{/delete/{id}(id=${equipment.id})}"
+			          method="post"
+			          onsubmit="return confirm('本当に削除しますか？');">
+
+			        <button type="submit"
+			                class="--button-danger">
+			            削除
+			        </button>
+
+			    </form>
+
+			</div>
+
+		</td>
+		
+    </tr>
+	
 </table>
 
 </div>
 
 	<script>
-		
-	
-	//＋、－でquantityを変えるための処理
-	function changeQuantity(button, amount){
-		
-		//ボタンが入っているquantity-areaを取得
-		const quantityArea = button.closest(".quantity-area");
-		
-		//数量の表示部分を取得
-		const quantityNumber = quantityArea.querySelector(".quantity-number");
-		
-		//現在表示されている数量を取得
-		let quantity = Number(quantityNumber.textContent);
-		
-		//数量変更
-		quantity += amount;
-		
-		//1未満にはしない
-		if(quantity < 1) {
-			
-			quantity = 1;
-			
-		}
-		
-		quantityNumber.textContent = quantity;
-		
-	}
 	
 	//数量変更するためのメソッド
 	function changeQuantity(button, amount) {
@@ -845,9 +1097,15 @@ pre code {
 	    quantityInput.value = quantity;
 	}
 	
-	
-	</script>
+	function toggleSettings(button) {
+	    const cell = button.closest("td");
+	    const panel = cell.querySelector(".settings-panel");
 
+	    panel.classList.toggle("open");
+	}
+
+	</script>
+	
 </body>
 
 </html>
