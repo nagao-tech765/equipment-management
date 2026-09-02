@@ -597,13 +597,23 @@ pre code {
 	margin-top: 24px;
 }
 
+.no-result{
+	margin: 20px 0;
+	padding: 16px;
+	color: var(--muted);
+	text-align: center;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--code-bg)
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="--page">
+<h2 class="--page">
 
 <h1 class="--title">備品管理</h1>
 
@@ -709,8 +719,32 @@ pre code {
 </form>
 
 
-<hr>
+<h2>ジャンル検索</h2>
 
+<form action="/category" method="get">
+		
+		<select name="category" class="--input">
+				
+			<option value="">ジャンルを選択</option>
+			<option value="食品">食品</option>
+			<option value="日用品">日用品</option>
+			<option value="文房具">文房具</option>
+			<option value="衛生用品">衛生用品</option>
+			<option value="掃除用品">掃除用品</option>
+			<option value="その他">その他</option>
+			<option value="すべて">すべて</option>
+			
+		</select>
+		
+		<button type="submit" class="--button">
+			絞り込み
+		</button>
+		
+</form>
+
+<div th:if="${#lists.isEmpty(list)}" class="no-result">
+	検索結果はありません	
+</div>
 
 <table class="--table">
 
@@ -819,41 +853,6 @@ pre code {
 			            自動減少：未設定
 			        </span>
 			    </div>
-
-			    <!--form th:action="@{/decrease-setting/{id}(id=${equipment.id})}"
-			          method="post">
-			        <div class="decrease-input-form">
-			            <input type="number"
-			                   name="decreaseInterval"
-			                   min="1"
-			                   placeholder="減少間隔"
-			                   required>
-			            <select name="decreaseUnit">
-			                <option value="DAY">日ごとに</option>
-			                <option value="MONTH">ヶ月ごとに</option>
-			            </select>
-			            <input type="number"
-			                   name="decreaseQuantity"
-			                   min="1"
-			                   placeholder="減少数"
-			                   required>
-						
-						<span class="decrease-unit-text">個減少</span>	   
-						
-			        </div>
-
-			        <div class="decrease-button-area">
-			            <button type="submit" class="--button">
-			                設定
-			            </button>
-
-			            <button type="button"
-			                    class="--button-danger"
-			                    th:onclick="'if(confirm(\'自動減少設定を解除しますか？\')) document.getElementById(\'delete-form-' + ${equipment.id} + '\').submit();'">
-			                自動減少解除
-			            </button>
-			        </div>
-			    </form -->
 
 			    <!-- 減少設定解除フォーム -->
 			    <form th:id="'delete-form-' + ${equipment.id}"
@@ -982,7 +981,7 @@ pre code {
 
 			                <option value="MONTH"
 			                        th:selected="${equipment.decreaseUnit == 'MONTH'}">
-			                    月
+			                    ヶ月
 			                </option>
 
 			            </select>
@@ -1042,7 +1041,6 @@ pre code {
 			        </button>
 
 			    </form>
-
 
 			    <!-- 削除 -->
 			    <form th:action="@{/delete/{id}(id=${equipment.id})}"

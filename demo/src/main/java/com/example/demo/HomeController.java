@@ -343,6 +343,28 @@ public class HomeController {
 
 		return "index";
 	}
+	
+	@GetMapping("/category")
+	public String category(
+			
+		@RequestParam String category,
+		Model model) {
+		
+			if(category.equals("すべて")) {
+				
+				model.addAttribute(
+						"list",
+						repository.findAllByOrderByQuantityAsc()
+				);
+			} else {
+				
+				model.addAttribute(
+						"list",
+						repository.findByCategory(category));
+				
+			}
+			return "index";
+		}
 
 	//数量変更したときの処理
 	@PostMapping("/quantity/update/{id}")
