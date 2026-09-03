@@ -103,6 +103,7 @@ JavaScript
 自動減少設定の解除や、備品自体の削除も設定画面から行えます。
 
 ## ディレクトリ構成
+```text
 src
 └── main
     ├── java
@@ -114,6 +115,7 @@ src
     └── resources
         └── templates
             └── index.html
+```
 
 ## 今後追加したい機能
 ログイン機能
